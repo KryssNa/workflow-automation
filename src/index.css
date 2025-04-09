@@ -117,3 +117,57 @@
   margin-inline: auto;
   padding-inline: 2rem;
 }
+
+
+/* src/styles/custom-select.css */
+
+/* Override Select dropdown styles */
+.custom-select-content {
+  background-color: #1a1a1a !important;
+  border: 1px solid var(--primary) !important;
+  color: white !important;
+  z-index: 9999 !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+  padding: 0.5rem !important;
+}
+
+.custom-select-item {
+  color: white !important;
+  background-color: transparent !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.25rem !important;
+  margin: 0.1rem 0 !important;
+  cursor: pointer !important;
+  font-size: 0.875rem !important;
+}
+
+.custom-select-item:hover,
+.custom-select-item[data-highlighted] {
+  background-color: rgba(139, 92, 246, 0.2) !important;
+  color: white !important;
+}
+
+.custom-select-label {
+  color: #9ca3af !important;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.75rem !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Fix for z-index stacking issues */
+.select-wrapper {
+  position: relative !important;
+  z-index: 999 !important;
+}
+
+/* Fix for overlay */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important; 
+}
+
+.radix-select-content {
+  background-color: #1a1a1a !important;
+  color: white !important;
+}

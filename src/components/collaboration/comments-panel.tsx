@@ -1,14 +1,14 @@
 "use client"
 
-import { Avatar, AvatarFallback } from ".ui/avatar"
-import { Button } from ".ui/button"
-import { Textarea } from ".ui/textarea"
-import { useWorkflowStore } from "@/store/workflow-store"
-import type { WorkflowSubmission } from "@/types"
+import { Avatar, AvatarFallback } from "../ui/avatar"
+import { Button } from "../ui/button"
+import { Textarea } from "../ui/textarea"
+import { useWorkflowStore } from "../../store/workflow-store"
+import type { WorkflowSubmission } from "../../types"
 import { AnimatePresence, motion } from "framer-motion"
 import { MessageSquare, Reply, Send, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 
 interface CommentsPanelProps {
   submission: WorkflowSubmission
@@ -35,7 +35,7 @@ export function CommentsPanel({ submission }: CommentsPanelProps) {
 
     addComment({
       text: newComment,
-      replyTo,
+      replyTo: replyTo ?? undefined,
       stepId: undefined, // Could be set to a specific step ID if needed
     })
 

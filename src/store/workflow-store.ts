@@ -24,14 +24,7 @@ import type {
   WorkflowSubmission,
 } from "../types"
 
-// Update the ModalState type to include 'confirmation'
-// export interface ModalState {
-//   isOpen: boolean;
-//   type: "business" | "department" | "workflow" | "export" | "comment" | "integration" | "notification" | "confirmation" | null;
-//   data?: any;
-// }
-
-interface WorkflowState {
+export interface WorkflowState {
   // Data
   currentQuestions: WorkflowQuestion[]
   currentSteps: WorkflowStep[]
@@ -56,6 +49,8 @@ interface WorkflowState {
   selectedExportFormat: ExportFormat | null
   deepseekResponse: DeepseekResponse | null
   activeCollaborators: { id: string; name: string; color: string }[]
+  showForm: boolean
+  selectedSubmission: string | null
 
   // Graph state (for non-linear workflows)
   currentGraph: WorkflowGraph | null
@@ -63,14 +58,13 @@ interface WorkflowState {
 
   // Actions
   updateAnswer: (id: string, answer: string) => void
-  submitWorkflow: () => Promise<void>
+  submitWorkflow: () => Promise<string | null>
   editSubmission: (submissionId: string) => void
   resetForm: () => void
   setCurrentPage: (page: number) => void
   setBusinessName: (name: string) => void
   setDepartmentName: (name: string) => void
   setWorkflowName: (name: string) => void
-  // Update the openModal function to include 'confirmation'
   openModal: (
     type:
       | "business"
@@ -84,8 +78,11 @@ interface WorkflowState {
     data?: any,
   ) => void
   closeModal: () => void
+  saveModal: () => void
   setExportFormat: (format: ExportFormat | null) => void
   deleteSubmission: (submissionId: string) => void
+  setShowForm: (show: boolean) => void
+  setSelectedSubmission: (id: string | null) => void
 
   // Graph actions
   toggleWorkflowType: () => void
@@ -260,6 +257,8 @@ export const useWorkflowStore = create<WorkflowState>()(
       selectedExportFormat: null,
       deepseekResponse: null,
       activeCollaborators: [],
+      showForm: false,
+      selectedSubmission: null,
 
       // Graph state
       currentGraph: null,
@@ -373,7 +372,18 @@ export const useWorkflowStore = create<WorkflowState>()(
           set({
             currentQuestions: defaultQuestions.map((q) => ({ ...q, answer: "" })),
             currentPage: 0,
+            showForm: false,
           })
+
+          // Redirect to workflow section with the new ID
+          window.history.pushState({}, "", `/?id=${updatedSubmission.id}`)
+
+          // Set the selected submission ID for display
+          set({
+            selectedSubmission: updatedSubmission.id,
+          })
+
+          return updatedSubmission.id
         } catch (error) {
           console.error("Error submitting workflow:", error)
 
@@ -387,6 +397,8 @@ export const useWorkflowStore = create<WorkflowState>()(
               onClick: () => get().submitWorkflow(),
             },
           )
+
+          return null
         } finally {
           set({ isAnalyzing: false })
         }
@@ -407,6 +419,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             isLinearWorkflow: submission.isLinear !== false,
             isEditing: true,
             currentSubmissionId: submissionId,
+            showForm: true,
           })
 
           // Start collaboration
@@ -477,9 +490,22 @@ export const useWorkflowStore = create<WorkflowState>()(
       closeModal: () => {
         set({
           modalState: {
-            isOpen: false,
-            type: null,
-            data: undefined,
+        isOpen: false,
+        type: null,
+        data: undefined,
+          },
+          selectedExportFormat: null,
+        })
+
+        // Navigate to the home page
+        window.location.href = "/"
+      },
+      saveModal: () => {
+        set({
+          modalState: {
+        isOpen: false,
+        type: null,
+        data: undefined,
           },
           selectedExportFormat: null,
         })
@@ -503,6 +529,14 @@ export const useWorkflowStore = create<WorkflowState>()(
         get().addNotification("success", "Workflow Deleted", "Your workflow has been deleted successfully.")
       },
 
+      setShowForm: (show) => {
+        set({ showForm: show })
+      },
+
+      setSelectedSubmission: (id) => {
+        set({ selectedSubmission: id })
+      },
+
       // Graph actions
       toggleWorkflowType: () => {
         const { isLinearWorkflow, currentSteps } = get()
@@ -518,7 +552,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             },
             ...currentSteps.map((step, index) => ({
               id: step.id,
-              type: "step" as const, // Explicitly set type to a valid literal
+              type: "step" as const,
               data: step,
               position: { x: 250, y: (index + 1) * 150 },
             })),

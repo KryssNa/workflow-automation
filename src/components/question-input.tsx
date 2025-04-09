@@ -1,19 +1,22 @@
+// src/components/question-input.tsx
 "use client"
 
-import { Textarea } from "./ui/textarea"
 import { motion } from "framer-motion"
+import { AlertCircle } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
+import { Textarea } from "./ui/textarea"
 
 interface QuestionInputProps {
   id: string
   question: string
   answer: string
+  error?: string
   onChange: (id: string, value: string) => void
   index: number
 }
 
-export function QuestionInput({ id, question, answer, onChange, index }: QuestionInputProps) {
+export function QuestionInput({ id, question, answer, error, onChange, index }: QuestionInputProps) {
   const [value, setValue] = useState(answer)
 
   useEffect(() => {
@@ -85,15 +88,34 @@ export function QuestionInput({ id, question, answer, onChange, index }: Questio
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <label className="block text-white mb-3 text-lg">
-        {index + 1}. {question}
+      <label className={`block mb-3 text-lg ${error ? 'text-red-400' : 'text-white'}`}>
+        {index + 1}. {question} {error && <span className="text-red-400">*</span>}
       </label>
       <Textarea
         value={value}
         onChange={handleChange}
         placeholder={getPlaceholder(question)}
-        className="w-full bg-transparent border-2 border-primary/50 focus:border-primary text-white rounded-md p-4 min-h-[120px] placeholder:text-gray-400"
+        className={`w-full bg-transparent border-2 ${error
+            ? 'border-red-500/50 focus:border-red-400'
+            : value.trim()
+              ? 'border-green-500/50 focus:border-primary'
+              : 'border-primary/50 focus:border-primary'
+          } text-white rounded-md p-4 min-h-[120px] placeholder:text-gray-400`}
       />
+      {error && (
+        <div className="flex items-center mt-2 text-red-400 text-sm">
+          <AlertCircle className="h-4 w-4 mr-1.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {value.trim() && !error && (
+        <div className="text-right mt-1">
+          <span className="text-green-400 text-xs">
+            {value.length < 20 ? 'Consider adding more details' : 'Great response!'}
+          </span>
+        </div>
+      )}
     </motion.div>
   )
 }

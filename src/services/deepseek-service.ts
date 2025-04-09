@@ -16,6 +16,16 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
     const workflowStepsText = questions[1]?.answer || ""
     const workflowSteps = workflowStepsText.split(/\n|,/).filter((step) => step.trim().length > 0)
 
+    // Get hourly rate if provided
+    const hourlyRateQuestion = questions.find(q => 
+      q.question.toLowerCase().includes("salary") || 
+      q.question.toLowerCase().includes("cost") ||
+      q.question.toLowerCase().includes("hourly") ||
+      q.question.toLowerCase().includes("rate")
+    )
+    const hourlyRate = extractHourlyRate(hourlyRateQuestion?.answer || "")
+
+    // Improved prompt that specifically requests a PlantUML diagram with proper formatting
     const prompt = `
       Analyze the following workflow information and provide recommendations for automation and AI integration:
       
@@ -61,7 +71,10 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
         body: JSON.stringify({
           model: "deepseek-chat",
           messages: [
-            { role: "system", content: "You are an AI workflow optimization expert." },
+            { 
+              role: "system", 
+              content: "You are an AI workflow optimization expert."
+            },
             { role: "user", content: prompt },
           ],
           response_format: { type: "json_object" },
@@ -84,7 +97,10 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
         // Get recommended tools based on workflow description and steps
         const recommendedTools = await getRecommendedToolsForWorkflow(workflowDescription, workflowSteps)
 
-        // Enhance the response with real tool recommendations
+        // Note: We no longer store the PlantUML code in the response to ensure fresh generation each time
+        // Instead, we'll dynamically generate it in the component
+
+        // Enhance the response with real tool recommendations and hourly rate
         const enhancedResponse: DeepseekResponse = {
           ...parsedResponse,
           tools: recommendedTools.map((tool) => ({
@@ -92,6 +108,7 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
             description: tool.company_description || tool.main_features,
             cost: tool.pricing || "Custom pricing available",
           })),
+          hourlyRate: hourlyRate || 50, // Store the hourly rate in the response
         }
 
         return enhancedResponse
@@ -102,7 +119,7 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
     } catch (apiError) {
       console.error("Error calling Deepseek API:", apiError)
       // Fall back to simulated response if API call fails
-      return simulateDeepseekResponse(questions, workflowDescription, workflowSteps)
+      return simulateDeepseekResponse(questions, workflowDescription, workflowSteps, hourlyRate)
     }
   } catch (error) {
     console.error("Error generating workflow analysis:", error)
@@ -110,10 +127,40 @@ export async function generateWorkflowAnalysis(questions: WorkflowQuestion[]): P
   }
 }
 
+// Helper function to extract hourly rate from text
+function extractHourlyRate(text: string): number | null {
+  if (!text) return null
+  
+  // Look for numbers after currency symbols or with keywords like "hourly", "rate", "salary"
+  const currencyRegex = /\$\s*(\d+(\.\d+)?)|(\d+(\.\d+)?)\s*\/\s*h(ou)?r|\$(\d+)k|\$(\d+),(\d+)/i
+  const match = text.match(currencyRegex)
+  
+  if (match) {
+    // Extract the number part
+    const rateStr = match[1] || match[3] || match[6] || (match[7] + match[8])
+    let rate = parseFloat(rateStr)
+    
+    // If it's an annual salary (likely if over 100), convert to hourly
+    // Assuming 2080 work hours per year (40 hours/week * 52 weeks)
+    if (rate > 100 || match[6]) {
+      // If it's in thousands (e.g., $120k)
+      if (match[6]) {
+        rate = rate * 1000
+      }
+      rate = rate / 2080
+    }
+    
+    return rate
+  }
+  
+  return null
+}
+
 async function simulateDeepseekResponse(
   questions: WorkflowQuestion[],
   workflowDescription: string,
   workflowSteps: string[],
+  hourlyRate?: number | null,
 ): Promise<DeepseekResponse> {
   // Extract the workflow name from the first question if available
   const workflowName = workflowDescription || "workflow"
@@ -211,5 +258,6 @@ Key Steps:
       quarterlySavings: 24.48 * 480,
       yearlySavings: 24.48 * 1920,
     },
+    hourlyRate: hourlyRate || 50,
   }
 }

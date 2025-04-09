@@ -1,12 +1,12 @@
 "use client"
 
-import { Avatar, AvatarFallback } from ".ui/avatar"
-import { Button } from ".ui/button"
-import { useWorkflowStore } from "@/store/workflow-store"
+import { Avatar, AvatarFallback } from "../ui/avatar"
+import { Button } from "../ui/button"
+import { useWorkflowStore } from "../../store/workflow-store"
 import { AnimatePresence, motion } from "framer-motion"
 import { MessageSquare, Users, X } from "lucide-react"
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 
 interface CollaboratorsPanelProps {
   submissionId: string
